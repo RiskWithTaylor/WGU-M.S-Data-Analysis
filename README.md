@@ -1,88 +1,77 @@
-# Taylor Wilkerson — M.S. Data Analytics Portfolio
+# Analytics Programming — Course Repository
 
-Welcome to my project portfolio repo.
-
-I’m currently pursuing an **M.S. in Data Analytics** and using this space to **showcase hands-on projects** that build real, job-ready skills across the data lifecycle: data wrangling, analysis, modeling, and communication.
+This repository contains my work for **Analytics Programming**, focused on building practical coding skills for real analytics tasks: importing data, cleaning it, transforming it, analyzing it, and presenting results clearly.
 
 ---
 
-## 🎓 About My M.S. in Data Analytics
+## 🎯 Course Goals (What I’m Building)
 
-This program is sharpening my ability to:
-- Translate business problems into measurable analytics questions
-- Collect, clean, and validate messy datasets
-- Apply statistics and modeling to generate insights
-- Communicate findings clearly through visuals, summaries, and documentation
-- Build repeatable workflows (so results are reliable, not “one-off”)
-
-My goal is to graduate with a portfolio that proves I can do more than learn concepts — I can **ship analysis**.
-
----
-
-## 📌 Purpose of This Repo
-
-This repository exists to:
-- Showcase analytics projects (course-based + personal builds)
-- Document my learning progress and methods
-- Provide a clean portfolio for recruiters and hiring managers
-- Support my long-term direction in **risk + analytics + modern data work**
+By the end of this course, I’m aiming to be confident in:
+- Loading data from common formats (CSV, Excel, etc.)
+- Cleaning and validating datasets (missing values, duplicates, outliers)
+- Writing reusable code (functions, modules, clear structure)
+- Performing descriptive analytics and basic statistical summaries
+- Creating derived metrics and new features
+- Communicating findings with simple visuals + clean documentation
 
 ---
 
-## 🧰 Tools & Skills Highlighted
+## 🧠 What This Repo Demonstrates
 
-Depending on the project, you’ll see work involving:
-- **Python** (pandas, numpy, matplotlib, scikit-learn)
-- **SQL** (joins, aggregations, data extraction)
-- **Excel** (exploratory analysis, reporting)
-- **Power BI / Tableau** (dashboards & communication)
-- **Statistics & Modeling** (descriptive stats, regression, classification, clustering)
-
----
-
-## 📂 Repo Structure (Typical)
-
-Projects are organized so each one is easy to review:
-
-- `project-name/`
-  - `README.md` (goal, approach, findings)
-  - `data/` (sample or sanitized data when allowed)
-  - `notebooks/` (EDA + analysis)
-  - `src/` (scripts/functions)
-  - `outputs/` (charts, tables, exported results)
+This repo is meant to show that I can:
+- Turn requirements into working code
+- Produce correct outputs consistently (not “it worked once”)
+- Document my process clearly for review
+- Build analytics workflows that are repeatable and easy to follow
 
 ---
 
-## ✅ What Makes a “Complete” Project Here
+## 🧰 Tools & Skills Used
 
-Each project aims to include:
-- A clear **problem statement**
-- A short **data description**
-- **Methods** used (and why)
-- **Results** + visuals
-- **Limitations / next steps**
-- Clean, reproducible code
-
----
-
-## 🚀 Current Focus
-
-Right now I’m focused on building strength in:
-- Data cleaning + validation
-- Feature engineering
-- Model evaluation and interpretation
-- Writing professional documentation (readable and reviewable)
+Depending on the assignment, you’ll see:
+- **Python** (primary)
+  - pandas, numpy
+  - matplotlib (basic visualization)
+- **Jupyter Notebooks** (exploration + explanation)
+- **SQL (optional/when applicable)** for querying and aggregation
+- **Excel** for quick validation and comparison checks
 
 ---
 
-## 📫 Contact / Links
+## 📂 Repository Structure
 
-If you want to connect:
-- **LinkedIn:** *www.linkedin.com/in/taylor-n-wilkerson*
-- **Email:** *risk.with.taylor@gmail.com*
+Typical organization:
+
+- `assignments/`
+  - Individual course tasks and submissions  
+- `notebooks/`
+  - EDA, practice exercises, walkthroughs  
+- `src/`
+  - Reusable functions/scripts (cleaning, metrics, helpers)  
+- `data/`
+  - Sample or sanitized datasets (when allowed)  
+- `outputs/`
+  - Charts, exported tables, and result files  
 
 ---
 
-## License
+## ✅ Standards I Follow
 
-Unless otherwise noted inside a specific project folder, code in this repo is shared under the **MIT License**.
+To keep work professional and easy to grade/review:
+- Clear variable naming and comments where needed
+- Step-by-step logic (no unexplained “magic”)
+- Reproducible results (same input → same output)
+- Requirements addressed directly (with outputs saved when requested)
+
+---
+
+## 📌 Example Tasks You’ll See Here
+
+Common deliverables include:
+- Importing datasets into a dataframe
+- Identifying duplicates and data quality issues
+- Grouping and summarizing numeric variables (mean/median/min/max)
+- Filtering based on conditions (e.g., negative ratios)
+- Creating calculated metrics (e.g., debt-to-income)
+- Concatenating/merging results back into the original dataset
+- Exporting clean results (CSV/Excel) when required
