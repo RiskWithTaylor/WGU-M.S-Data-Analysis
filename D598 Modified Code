@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import pandas as pd
+import numpy as np
+
+# ----------------------------------------
+# 1) Import the data file into a data frame
+# ----------------------------------------
+df = pd.read_excel("D598 Data Set.xlsx")
+print("Loaded df shape:", df.shape)
+print("Columns:", df.columns.tolist())
+
+# ----------------------------------------
+# 2) Identify any duplicate rows in the data set
+# ----------------------------------------
+duplicates_df = df[df.duplicated(keep="first")].copy()
+print("Duplicate rows found:", len(duplicates_df))
+
+# ----------------------------------------
+# 3) Group all IDs by state + descriptive stats by state (mean/median/min/max)
+#    for ALL numeric variables
+# ----------------------------------------
+state_col = "Business State"
+id_col = "Business ID"
+
+# (Optional) IDs grouped by state (if you want to show this explicitly)
+ids_by_state_df = (
+    df.groupby(state_col)[id_col]
+      .apply(list)
+      .reset_index(name="Business IDs")
+)
+
+# Numeric columns (all numeric variables in the dataset)
+numeric_cols = df.select_dtypes(include="number").columns.tolist()
+
+# Descriptive stats by state for numeric variables
+stats_by_state_df = (
+    df.groupby(state_col)[numeric_cols]
+      .agg(["mean", "median", "min", "max"])
+)
+
+# Flatten MultiIndex columns for readability/export
+stats_by_state_df.columns = [f"{col}_{stat}" for col, stat in stats_by_state_df.columns]
+stats_by_state_df = stats_by_state_df.reset_index()
+
+print("Stats by state df shape:", stats_by_state_df.shape)
+
+# ----------------------------------------
+# 4) Filter businesses with NEGATIVE debt-to-equity
+# ----------------------------------------
+negative_dte_df = df[df["Debt to Equity"] < 0].copy()
+print("Negative Debt-to-Equity rows:", len(negative_dte_df))
+
+# ----------------------------------------
+# 5) Create a new data frame with Debt-to-Income ratio for every business
+#    Debt-to-Income = Total Long-term Debt / Total Revenue
+# ----------------------------------------
+debt = df["Total Long-term Debt"]
+revenue = df["Total Revenue"]
+
+# safe divide (avoid divide by 0 or missing revenue)
+debt_to_income = np.where((revenue.isna()) | (revenue == 0), np.nan, debt / revenue)
+
+dti_df = pd.DataFrame({
+    "Business ID": df["Business ID"],
+    "Debt to Income": debt_to_income
+})
+
+print("DTI df shape:", dti_df.shape)
+
+# ----------------------------------------
+# 6) Concatenate the DTI dataframe with the original dataframe
+#    Best practice = merge on Business ID so rows align correctly
+# ----------------------------------------
+df_final = df.merge(dti_df, on="Business ID", how="left")
+print("Final df shape:", df_final.shape)
+
+# ----------------------------------------
+# Preview outputs
+# ----------------------------------------
+print("\n--- duplicates_df (head) ---")
+print(duplicates_df.head())
+
+print("\n--- stats_by_state_df (head) ---")
+print(stats_by_state_df.head())
+
+print("\n--- negative_dte_df (head) ---")
+print(negative_dte_df.head())
+
+print("\n--- df_final (head) ---")
+print(df_final.head())
+
+# ----------------------------------------
+# OPTIONAL: Export outputs (uncomment if needed)
+# ----------------------------------------
+# duplicates_df.to_csv("duplicates_rows.csv", index=False)
+# stats_by_state_df.to_csv("state_descriptive_stats.csv", index=False)
+# negative_dte_df.to_csv("negative_debt_to_equity.csv", index=False)
+# df_final.to_csv("final_with_debt_to_income.csv", index=False)
