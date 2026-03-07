@@ -1,88 +1,144 @@
-# Taylor Wilkerson — M.S. Data Analytics Portfolio
+# Telecommunications Customer Churn Analysis Dashboard
 
-Welcome to my project portfolio repo.
+## Overview
+Customer churn is one of the most significant challenges in the telecommunications industry. Because acquiring new customers can cost significantly more than retaining existing ones, organizations must identify patterns that lead customers to leave their service.
 
-I’m currently pursuing an **M.S. in Data Analytics** and using this space to **showcase hands-on projects** that build real, job-ready skills across the data lifecycle: data wrangling, analysis, modeling, and communication.
-
----
-
-## 🎓 About My M.S. in Data Analytics
-
-This program is sharpening my ability to:
-- Translate business problems into measurable analytics questions
-- Collect, clean, and validate messy datasets
-- Apply statistics and modeling to generate insights
-- Communicate findings clearly through visuals, summaries, and documentation
-- Build repeatable workflows (so results are reliable, not “one-off”)
-
-My goal is to graduate with a portfolio that proves I can do more than learn concepts — I can **ship analysis**.
+This project analyzes telecommunications customer data and presents insights through an interactive Tableau dashboard designed to support executive decision-making. The goal of the dashboard is to help leadership identify churn drivers and develop strategies to improve customer retention.
 
 ---
 
-## 📌 Purpose of This Repo
+## Business Problem
+Telecommunications companies operate in highly competitive markets where customers can easily switch providers. Understanding **why customers churn** allows organizations to improve service reliability, adjust pricing strategies, and strengthen customer engagement.
 
-This repository exists to:
-- Showcase analytics projects (course-based + personal builds)
-- Document my learning progress and methods
-- Provide a clean portfolio for recruiters and hiring managers
-- Support my long-term direction in **risk + analytics + modern data work**
+This project explores the following questions:
 
----
-
-## 🧰 Tools & Skills Highlighted
-
-Depending on the project, you’ll see work involving:
-- **Python** (pandas, numpy, matplotlib, scikit-learn)
-- **SQL** (joins, aggregations, data extraction)
-- **Excel** (exploratory analysis, reporting)
-- **Power BI / Tableau** (dashboards & communication)
-- **Statistics & Modeling** (descriptive stats, regression, classification, clustering)
+- Which contract types have the highest churn rates?
+- Are operational issues contributing to customer churn?
+- Are there geographic patterns in churn behavior?
+- Which customer characteristics may influence churn risk?
 
 ---
 
-## 📂 Repo Structure (Typical)
+## Dataset
+The dataset used in this project contains information on **10,000 telecommunications customers** across the United States.
 
-Projects are organized so each one is easy to review:
+### Data Categories
+The dataset includes 50 variables grouped into the following categories:
 
-- `project-name/`
-  - `README.md` (goal, approach, findings)
-  - `data/` (sample or sanitized data when allowed)
-  - `notebooks/` (EDA + analysis)
-  - `src/` (scripts/functions)
-  - `outputs/` (charts, tables, exported results)
+**Customer Demographics**
+- Age
+- Income
+- Marital status
+- Gender
+- Geographic location
 
----
+**Customer Account Information**
+- Contract type
+- Payment method
+- Monthly charges
+- Customer tenure
 
-## ✅ What Makes a “Complete” Project Here
+**Operational Service Data**
+- Weekly outage time
+- Equipment failures
+- Technical support contacts
 
-Each project aims to include:
-- A clear **problem statement**
-- A short **data description**
-- **Methods** used (and why)
-- **Results** + visuals
-- **Limitations / next steps**
-- Clean, reproducible code
+**Product Features**
+- Internet service
+- Streaming services
+- Security features
+- Device protection
 
----
-
-## 🚀 Current Focus
-
-Right now I’m focused on building strength in:
-- Data cleaning + validation
-- Feature engineering
-- Model evaluation and interpretation
-- Writing professional documentation (readable and reviewable)
-
----
-
-## 📫 Contact / Links
-
-If you want to connect:
-- **LinkedIn:** *www.linkedin.com/in/taylor-n-wilkerson*
-- **Email:** *risk.with.taylor@gmail.com*
+**Customer Survey Responses**
+- Service reliability
+- Responsiveness
+- Customer experience indicators
 
 ---
 
-## License
+## Dashboard Features
 
-Unless otherwise noted inside a specific project folder, code in this repo is shared under the **MIT License**.
+The Tableau dashboard provides interactive visualizations to help leadership explore churn trends.
+
+### Key Metrics
+- **Overall Churn Rate**
+- **Average Monthly Charge of Churned Customers**
+
+### Data Visualizations
+- Churn Rate by Contract Type
+- Geographic Churn Distribution (Map)
+- Operational Drivers of Churn (Scatter Plot)
+- Executive KPI Indicators
+
+### Interactive Filters
+- **State**
+- **Contract Type**
+
+These filters allow users to dynamically explore how churn patterns change across regions and customer segments.
+
+---
+
+## Tools Used
+
+- **Tableau** – Interactive dashboard development  
+- **Python** – Data preprocessing and analysis  
+- **Jupyter Notebook** – Exploratory data analysis  
+- **GitHub** – Version control and project documentation  
+
+---
+
+## Key Insights
+
+Some initial insights from the analysis include:
+
+- Month-to-month contracts show higher churn rates compared to long-term contracts.
+- Service reliability issues such as outages and equipment failures appear to correlate with increased churn.
+- Certain geographic regions demonstrate higher churn concentrations.
+- Customers with higher monthly charges may exhibit greater churn sensitivity.
+
+These insights can help organizations prioritize improvements in service reliability and customer engagement.
+
+---
+
+## Repository Structure
+
+telecom-churn-dashboard
+
+│
+
+├── data/
+│ └── Telecommunications_Churn_Data.csv
+│
+
+├── dashboard/
+│ └── churn_dashboard.twbx
+│
+
+├── analysis/
+│ └── churn_analysis.ipynb
+│
+
+└── README.md
+
+
+---
+
+## Future Improvements
+
+Future iterations of this project may include:
+
+- Predictive churn modeling
+- Customer segmentation analysis
+- Machine learning models for churn prediction
+- Integration with real-time business intelligence tools
+
+---
+
+## Author
+
+**Taylor Wilkerson**
+
+- B.S. IT Management  
+- M.S. Data Analytics (in progress)
+
+Interested in financial technology, risk analytics, and data-driven strategy.
