@@ -1,88 +1,274 @@
-# Taylor Wilkerson — M.S. Data Analytics Portfolio
+# 📊 Data Preparation and Exploration – Employee Turnover Dataset
 
-Welcome to my project portfolio repo.
+## 👨‍💻 Author
+**Taylor Wilkerson**  
+B.S. IT Management – Western Governors University  
 
-I’m currently pursuing an **M.S. in Data Analytics** and using this space to **showcase hands-on projects** that build real, job-ready skills across the data lifecycle: data wrangling, analysis, modeling, and communication.
-
----
-
-## 🎓 About My M.S. in Data Analytics
-
-This program is sharpening my ability to:
-- Translate business problems into measurable analytics questions
-- Collect, clean, and validate messy datasets
-- Apply statistics and modeling to generate insights
-- Communicate findings clearly through visuals, summaries, and documentation
-- Build repeatable workflows (so results are reliable, not “one-off”)
-
-My goal is to graduate with a portfolio that proves I can do more than learn concepts — I can **ship analysis**.
+**Areas of Interest**
+- Data Analytics
+- Financial Technology
+- Risk Analytics
 
 ---
 
-## 📌 Purpose of This Repo
+# 📌 Project Overview
 
-This repository exists to:
-- Showcase analytics projects (course-based + personal builds)
-- Document my learning progress and methods
-- Provide a clean portfolio for recruiters and hiring managers
-- Support my long-term direction in **risk + analytics + modern data work**
+This project focuses on **data profiling, preparation, and cleaning** of an employee turnover dataset used by a multinational technology company.
 
----
+Employee turnover is a major operational cost for organizations. Replacing an employee can cost **6–9 months of the employee’s salary**, making workforce analytics critical for improving retention strategies.
 
-## 🧰 Tools & Skills Highlighted
+The objective of this project was to:
 
-Depending on the project, you’ll see work involving:
-- **Python** (pandas, numpy, matplotlib, scikit-learn)
-- **SQL** (joins, aggregations, data extraction)
-- **Excel** (exploratory analysis, reporting)
-- **Power BI / Tableau** (dashboards & communication)
-- **Statistics & Modeling** (descriptive stats, regression, classification, clustering)
+- Profile the dataset structure
+- Identify data quality issues
+- Implement Python-based data cleaning techniques
+- Prepare the dataset for future analytics and modeling
 
 ---
 
-## 📂 Repo Structure (Typical)
+# 📂 Dataset Overview
 
-Projects are organized so each one is easy to review:
+| Metric | Value |
+|------|------|
+| Records | 10,199 |
+| Variables | 16 |
+| Dataset Type | Workforce / HR dataset |
 
-- `project-name/`
-  - `README.md` (goal, approach, findings)
-  - `data/` (sample or sanitized data when allowed)
-  - `notebooks/` (EDA + analysis)
-  - `src/` (scripts/functions)
-  - `outputs/` (charts, tables, exported results)
-
----
-
-## ✅ What Makes a “Complete” Project Here
-
-Each project aims to include:
-- A clear **problem statement**
-- A short **data description**
-- **Methods** used (and why)
-- **Results** + visuals
-- **Limitations / next steps**
-- Clean, reproducible code
+The dataset contains employee demographic, employment, and compensation information used to analyze turnover patterns.
 
 ---
 
-## 🚀 Current Focus
+# 🧠 Skills Demonstrated
 
-Right now I’m focused on building strength in:
-- Data cleaning + validation
-- Feature engineering
-- Model evaluation and interpretation
-- Writing professional documentation (readable and reviewable)
-
----
-
-## 📫 Contact / Links
-
-If you want to connect:
-- **LinkedIn:** *www.linkedin.com/in/taylor-n-wilkerson*
-- **Email:** *risk.with.taylor@gmail.com*
+- Data Profiling
+- Data Cleaning
+- Data Quality Assessment
+- Python Data Analysis
+- Pandas Data Manipulation
+- Outlier Detection
+- Data Normalization
+- Data Preparation for Analytics
 
 ---
 
-## License
+# 🔧 Tools and Technologies
 
-Unless otherwise noted inside a specific project folder, code in this repo is shared under the **MIT License**.
+| Tool | Purpose |
+|-----|-----|
+| Python | Data analysis |
+| Pandas | Data manipulation |
+| NumPy | Numerical analysis |
+| JupyterLab | Development environment |
+| Excel | Dataset storage |
+
+---
+
+# 📊 Data Profiling Process
+
+The dataset was first inspected using Python and pandas to understand its structure.
+
+```python
+import pandas as pd
+
+df = pd.read_excel("Employee Turnover Dataset.xlsx")
+
+print("Rows:", df.shape[0])
+print("Columns:", df.shape[1])
+print(df.columns.tolist())
+```
+This inspection confirmed the number of records and variables in the dataset.
+
+Sample values were also inspected to understand real entries across each column.
+```python
+for col in df.columns:
+    print(col, ":", df[col].dropna().unique()[:3])
+```
+This helped identify representative values for each variable.
+- 
+
+# ⚠️ Data Quality Issues Identified
+
+Five common data quality issues were identified during the inspection process.
+- - -
+## Duplicate Records
+
+Duplicate employee records were detected.
+
+- 99 duplicate rows were identified
+
+- Duplicate *EmployeeNumber* values confirmed repeated employee entries
+
+Duplicate records can distort analytics by artificially inflating counts and trends.
+
+---
+# Missing Values
+
+##  Missing values were concentrated in a few variables.
+
+| Variable                     | Missing Values |
+| ---------------------------- | -------------- |
+| TextMessageOptIn             | 2,266          |
+| AnnualProfessionalDevHrs     | 1,969          |
+| NumCompaniesPreviouslyWorked | 665            |
+
+Total missing cells across the dataset: 4,900
+---
+
+# Inconsistent Categorical Values
+
+## Several categorical variables had inconsistent formatting.
+
+## Example:
+
+```
+InformationTechnology
+Information Technology
+Information_Technology
+```
+---
+# This issue occurred in variables such as:
+
+- JobRoleArea
+
+- PaycheckMethod
+
+## Inconsistent labels can split a single category into multiple groups.
+---
+# Formatting Errors
+
+## Text formatting inconsistencies were detected such as:
+
+```
+DirectDeposit
+Direct Deposit
+Direct_Deposit
+```
+### These inconsistencies can affect grouping and summary statistics.
+
+# Extreme Outliers
+
+## Outliers were detected in several numeric fields.
+
+| Variable                | Issue              |
+| ----------------------- | ------------------ |
+| AnnualSalary            | 544 outliers       |
+| DrivingCommuterDistance | 245 outliers       |
+| Salary ≤ 0              | 57 invalid entries |
+
+### Extreme values can significantly distort statistical analysis.
+---
+
+## 🧹 Data Cleaning Techniques
+
+### Several Python-based techniques were used to correct the identified issues.
+---
+
+# Removing Duplicate Records
+
+## Duplicate rows were removed using:
+
+```python
+
+df = df.drop_duplicates()
+```
+### This ensured each employee record remained unique.
+
+---
+# Handling Missing Values
+
+## Two strategies were implemented.
+
+| Data Type   | Method                 |
+| ----------- | ---------------------- |
+| Numerical   | Median imputation      |
+| Categorical | Replace with "Unknown" |
+
+### Median imputation was chosen because it is robust to extreme values.
+---
+
+# Standardizing Categorical Data
+
+## Categorical values were normalized by:
+
+- Removing whitespace
+
+- Replacing underscores with spaces
+
+- Converting text to lowercase
+
+- Mapping variations to canonical labels
+
+Example transformation:
+
+```
+Information_Technology → Information Technology
+```
+--- 
+
+# Fixing Invalid Numeric Values
+
+## Invalid salary values (< = 0) were replaced with missing values before imputation.
+--- 
+
+# Outlier Treatment
+
+## Outliers were detected using the Interquartile Range (IQR) method.
+
+## Values outside the bounds:
+
+```
+Q1 − 1.5 × IQR
+Q3 + 1.5 × IQR
+```
+### were capped to reduce their influence on the dataset.
+
+----
+
+# 📈 Advantages of the Cleaning Approach
+## Data Preservation
+
+Instead of removing records, imputation and outlier capping preserved all 10,199 records, maintaining statistical power.
+
+## Improved Category Consistency
+
+ Standardizing categorical labels ensures:
+
+- accurate grouping
+
+- correct frequency counts
+
+- improved modeling performance
+
+---
+
+# ⚠️ Limitations
+
+## Median Imputation
+
+Replacing missing values with the median may mask meaningful patterns in missing data.
+
+## Outlier Capping
+
+Extreme but legitimate values may be compressed, potentially reducing insight into rare cases.
+- - - 
+
+# 🚀 Future Improvements
+
+## Potential improvements to the project include:
+
+- predictive turnover modeling
+
+- machine learning classification
+
+- workforce analytics dashboards
+
+- anomaly detection techniques
+
+- deeper feature engineering
+
+- - - 
+
+# ⭐ Key Takeaway
+
+## Data preparation and exploration are essential steps in the analytics process.
+## Clean and well-structured data allows organizations to perform reliable analysis, build predictive models, and make informed business decisions.
