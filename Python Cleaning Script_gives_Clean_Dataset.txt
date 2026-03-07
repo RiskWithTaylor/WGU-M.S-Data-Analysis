@@ -1,0 +1,354 @@
+"""
+Employee Turnover — Data Quality Detection + Mitigation Script
+==============================================================
+
+What it does (end-to-end):
+1) Loads the Excel dataset
+2) Detects & reports:
+   - Duplicate entries
+   - Missing values
+   - Inconsistent entries (categorical value variants)
+   - Formatting errors (including column-name whitespace + type coercion checks)
+   - Outliers (IQR method)
+3) Mitigates issues by:
+   - Stripping column-name whitespace (fixes "HourlyRate " header)
+   - Dropping exact duplicate rows
+   - Standardizing categorical values (spacing/underscores/case + canonical mapping)
+   - Fixing invalid numeric values (e.g., AnnualSalary <= 0 -> NaN)
+   - Imputing missing numeric values with median; missing categorical with "Unknown"
+   - Capping numeric outliers to IQR bounds (winsorization)
+
+Dependencies:
+  pip install pandas numpy openpyxl
+
+Run:
+  python employee_turnover_cleaning.py
+
+Optional:
+  python employee_turnover_cleaning.py --input "Employee Turnover Dataset.xlsx" --output "Employee_Turnover_Cleaned.xlsx"
+"""
+
+import argparse
+import re
+from typing import Dict, Tuple, List
+
+import numpy as np
+import pandas as pd
+
+
+# -----------------------------
+# Helper functions
+# -----------------------------
+
+def normalize_text_series(s: pd.Series) -> pd.Series:
+    """
+    Normalize categorical text:
+      - cast to string
+      - strip leading/trailing whitespace
+      - replace underscores with spaces
+      - collapse multiple spaces
+      - lowercase
+    """
+    s2 = s.astype("string")
+    s2 = s2.str.strip()
+    s2 = s2.str.replace("_", " ", regex=False)
+    s2 = s2.str.replace(r"\s+", " ", regex=True)
+    s2 = s2.str.lower()
+    return s2
+
+
+def canonical_map(s: pd.Series, mapping: Dict[str, str]) -> pd.Series:
+    """
+    Apply a canonical mapping after normalization.
+    Any values not in mapping are Title-Cased for readability.
+    """
+    norm = normalize_text_series(s).fillna(pd.NA)
+    mapped = norm.map(mapping)
+
+    # If not mapped, convert to Title Case (still keeping NA as NA)
+    unmapped_mask = mapped.isna() & norm.notna()
+    mapped.loc[unmapped_mask] = norm.loc[unmapped_mask].str.title()
+    return mapped
+
+
+def iqr_bounds(x: pd.Series, k: float = 1.5) -> Tuple[float, float]:
+    """
+    Compute IQR outlier bounds.
+    Returns (lower_bound, upper_bound).
+    """
+    x = x.dropna()
+    if x.empty:
+        return (np.nan, np.nan)
+    q1 = x.quantile(0.25)
+    q3 = x.quantile(0.75)
+    iqr = q3 - q1
+    lower = q1 - k * iqr
+    upper = q3 + k * iqr
+    return float(lower), float(upper)
+
+
+def cap_outliers_iqr(df: pd.DataFrame, col: str, k: float = 1.5) -> Dict[str, float]:
+    """
+    Caps outliers in-place for a numeric column based on IQR bounds.
+    Returns a dict with bounds + how many values were capped.
+    """
+    lower, upper = iqr_bounds(df[col], k=k)
+    if np.isnan(lower) or np.isnan(upper):
+        return {"lower": np.nan, "upper": np.nan, "capped_low": 0, "capped_high": 0}
+
+    capped_low = int((df[col] < lower).sum(skipna=True))
+    capped_high = int((df[col] > upper).sum(skipna=True))
+
+    df.loc[df[col] < lower, col] = lower
+    df.loc[df[col] > upper, col] = upper
+
+    return {"lower": lower, "upper": upper, "capped_low": capped_low, "capped_high": capped_high}
+
+
+# -----------------------------
+# Detection (inspection) steps
+# -----------------------------
+
+def detect_quality_issues(df: pd.DataFrame, id_col: str = "EmployeeNumber") -> Dict:
+    report = {}
+
+    # Dataset shape
+    report["shape"] = {"rows": int(df.shape[0]), "cols": int(df.shape[1])}
+
+    # Duplicates
+    report["duplicates"] = {
+        "duplicate_rows": int(df.duplicated().sum()),
+        "duplicate_ids": int(df.duplicated(subset=[id_col]).sum()) if id_col in df.columns else None,
+    }
+
+    # Missing values
+    missing_by_col = df.isna().sum().sort_values(ascending=False)
+    report["missing"] = {
+        "total_missing_cells": int(missing_by_col.sum()),
+        "missing_by_column": missing_by_col[missing_by_col > 0].to_dict(),
+    }
+
+    # Inconsistent entries (show top unique values counts for object cols)
+    obj_cols = df.select_dtypes(include=["object", "string"]).columns.tolist()
+    inconsistent = {}
+    for col in obj_cols:
+        # show top 15 categories
+        vc = df[col].value_counts(dropna=False).head(15)
+        inconsistent[col] = vc.to_dict()
+    report["categorical_value_samples"] = inconsistent
+
+    # Formatting errors: (a) column-name whitespace, (b) numeric coercion checks
+    col_whitespace = [c for c in df.columns if c != c.strip()]
+    report["formatting"] = {"columns_with_leading_trailing_spaces": col_whitespace}
+
+    # Try coercion for likely numeric columns (if present)
+    likely_numeric = [
+        "HourlyRate", "HourlyRate ", "AnnualSalary", "DrivingCommuterDistance",
+        "HoursWeekly", "Age", "Tenure", "NumCompaniesPreviouslyWorked",
+        "AnnualProfessionalDevHrs"
+    ]
+    coercion_findings = {}
+    for c in likely_numeric:
+        if c in df.columns:
+            before_na = int(df[c].isna().sum())
+            coerced = pd.to_numeric(df[c], errors="coerce")
+            after_na = int(coerced.isna().sum())
+            new_bad = max(0, after_na - before_na)
+            coercion_findings[c] = {"new_non_numeric_values_detected": int(new_bad)}
+    report["formatting"]["numeric_coercion_checks"] = coercion_findings
+
+    # Outliers (IQR) on numeric columns
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    outlier_summary = {}
+    for col in numeric_cols:
+        lower, upper = iqr_bounds(df[col], k=1.5)
+        if np.isnan(lower) or np.isnan(upper):
+            continue
+        n_out = int(((df[col] < lower) | (df[col] > upper)).sum(skipna=True))
+        if n_out > 0:
+            outlier_summary[col] = {
+                "outliers": n_out,
+                "lower_bound": lower,
+                "upper_bound": upper,
+                "min": float(df[col].min(skipna=True)),
+                "max": float(df[col].max(skipna=True)),
+            }
+    report["outliers_iqr"] = outlier_summary
+
+    return report
+
+
+# -----------------------------
+# Mitigation (cleaning) steps
+# -----------------------------
+
+def clean_dataset(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict]:
+    log = {}
+
+    # 0) Fix column-name formatting (e.g., "HourlyRate " -> "HourlyRate")
+    old_cols = df.columns.tolist()
+    df = df.copy()
+    df.columns = df.columns.str.strip()
+    log["column_name_strip"] = {
+        "changed": old_cols != df.columns.tolist(),
+        "before": old_cols,
+        "after": df.columns.tolist(),
+    }
+
+    # 1) Drop exact duplicate rows
+    dup_rows_before = int(df.duplicated().sum())
+    df = df.drop_duplicates().reset_index(drop=True)
+    log["duplicates_removed"] = {"duplicate_rows_before": dup_rows_before, "rows_after_drop": int(df.shape[0])}
+
+    # 2) Standardize categorical columns (inconsistencies + formatting variants)
+    # Canonical mappings after normalization
+    paycheck_map = {
+        "direct deposit": "Direct Deposit",
+        "directdeposit": "Direct Deposit",
+        "mail check": "Mailed Check",
+        "mailed check": "Mailed Check",
+        "mailcheck": "Mailed Check",
+        "mailedcheck": "Mailed Check",
+        "pickup check": "Pickup Check",
+        "pick up check": "Pickup Check",
+    }
+
+    jobrole_map = {
+        "information technology": "Information Technology",
+        "human resources": "Human Resources",
+        "finance": "Finance",
+        "operations": "Operations",
+        "sales": "Sales",
+        "marketing": "Marketing",
+        # Add more if your dataset contains other areas with variants
+    }
+
+    yesno_map = {
+        "yes": "Yes",
+        "y": "Yes",
+        "true": "Yes",
+        "no": "No",
+        "n": "No",
+        "false": "No",
+    }
+
+    # Apply canonical mappings where relevant
+    for col, mapping in [
+        ("PaycheckMethod", paycheck_map),
+        ("JobRoleArea", jobrole_map),
+        ("Turnover", yesno_map),
+        ("TextMessageOptIn", yesno_map),
+    ]:
+        if col in df.columns:
+            before_unique = int(df[col].nunique(dropna=True))
+            df[col] = canonical_map(df[col], mapping)
+            after_unique = int(df[col].nunique(dropna=True))
+            log[f"standardized_{col}"] = {"unique_before": before_unique, "unique_after": after_unique}
+
+    # Normalize other categorical columns lightly (trim/case/underscores)
+    for col in ["Gender", "MaritalStatus", "CompensationType"]:
+        if col in df.columns:
+            before_unique = int(df[col].nunique(dropna=True))
+            # Here we Title-Case everything after normalization, without heavy remapping
+            df[col] = normalize_text_series(df[col]).str.title()
+            after_unique = int(df[col].nunique(dropna=True))
+            log[f"normalized_{col}"] = {"unique_before": before_unique, "unique_after": after_unique}
+
+    # 3) Numeric sanity fixes (formatting/data integrity)
+    # AnnualSalary should not be <= 0
+    if "AnnualSalary" in df.columns:
+        invalid_salary = int((df["AnnualSalary"] <= 0).sum(skipna=True))
+        df.loc[df["AnnualSalary"] <= 0, "AnnualSalary"] = np.nan
+        log["invalid_salary_fixed"] = {"annualsalary_leq_0_set_to_nan": invalid_salary}
+
+    # NumCompaniesPreviouslyWorked should be a count (non-negative)
+    if "NumCompaniesPreviouslyWorked" in df.columns:
+        invalid_companies = int((df["NumCompaniesPreviouslyWorked"] < 0).sum(skipna=True))
+        df.loc[df["NumCompaniesPreviouslyWorked"] < 0, "NumCompaniesPreviouslyWorked"] = np.nan
+        # convert to integer-like nullable if it’s basically whole numbers
+        df["NumCompaniesPreviouslyWorked"] = df["NumCompaniesPreviouslyWorked"].round().astype("Int64")
+        log["numcompanies_cleaned"] = {"negative_set_to_nan": invalid_companies, "dtype": str(df["NumCompaniesPreviouslyWorked"].dtype)}
+
+    # 4) Missing values mitigation
+    # Strategy:
+    #   - Numeric: median imputation
+    #   - Categorical: "Unknown"
+    missing_before = df.isna().sum().to_dict()
+
+    # Fill categorical missing
+    cat_cols = df.select_dtypes(include=["object", "string"]).columns.tolist()
+    for c in cat_cols:
+        df[c] = df[c].fillna("Unknown")
+
+    # Fill numeric missing with median
+    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    for c in num_cols:
+        if df[c].isna().any():
+            med = df[c].median(skipna=True)
+            df[c] = df[c].fillna(med)
+
+    missing_after = df.isna().sum().to_dict()
+    log["missing_values"] = {"missing_before": missing_before, "missing_after": missing_after}
+
+    # 5) Outliers mitigation (IQR capping) on selected numeric columns
+    # You can expand this list if needed.
+    outlier_cols = [c for c in ["AnnualSalary", "DrivingCommuterDistance", "HourlyRate", "HoursWeekly", "Tenure"] if c in df.columns]
+    outlier_caps = {}
+    for c in outlier_cols:
+        # ensure numeric
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+        outlier_caps[c] = cap_outliers_iqr(df, c, k=1.5)
+    log["outlier_capping_iqr"] = outlier_caps
+
+    return df, log
+
+
+# -----------------------------
+# Script entry point
+# -----------------------------
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", default="Employee Turnover Dataset.xlsx", help="Input Excel file path")
+    parser.add_argument("--output", default="Employee_Turnover_Cleaned.xlsx", help="Output cleaned Excel file path")
+    args = parser.parse_args(args=[])
+
+    # Load
+    df_raw = pd.read_excel(args.input)
+
+    # Detect issues (before)
+    before_report = detect_quality_issues(df_raw, id_col="EmployeeNumber")
+
+    # Clean (mitigate)
+    df_clean, cleaning_log = clean_dataset(df_raw)
+
+    # Detect issues (after)
+    after_report = detect_quality_issues(df_clean, id_col="EmployeeNumber")
+
+    # Save cleaned file
+    df_clean.to_excel(args.output, index=False)
+
+    # Print high-level summary to console
+    print("\n=== BEFORE (summary) ===")
+    print("Shape:", before_report["shape"])
+    print("Duplicates:", before_report["duplicates"])
+    print("Missing total:", before_report["missing"]["total_missing_cells"])
+    print("Columns with missing:", list(before_report["missing"]["missing_by_column"].keys()))
+    print("Outlier cols:", list(before_report["outliers_iqr"].keys()))
+
+    print("\n=== CLEANING ACTIONS (log) ===")
+    for k, v in cleaning_log.items():
+        print(f"- {k}: {v}")
+
+    print("\n=== AFTER (summary) ===")
+    print("Shape:", after_report["shape"])
+    print("Duplicates:", after_report["duplicates"])
+    print("Missing total:", after_report["missing"]["total_missing_cells"])
+    print("Columns with missing:", list(after_report["missing"]["missing_by_column"].keys()))
+    print("Outlier cols:", list(after_report["outliers_iqr"].keys()))
+
+    print(f"\nSaved cleaned dataset -> {args.output}")
+
+
+if __name__ == "__main__":
+    main()
